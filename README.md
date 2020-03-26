@@ -1,2 +1,2 @@
-# EventToGo
-A simple event emitter
+# eventToGo
+A simple event emitter / listener
