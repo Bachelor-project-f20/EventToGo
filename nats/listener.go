@@ -13,8 +13,10 @@ type natsEventListener struct {
 
 type Event struct {
 	ID        string
+	EventName string
 	Publisher string
 	Timestamp int64
+	Payload   []byte
 }
 
 func (e *Event) GetID() string {
@@ -27,6 +29,14 @@ func (e *Event) GetPublisher() string {
 
 func (e *Event) GetTimestamp() int64 {
 	return e.Timestamp
+}
+
+func (e *Event) GetEventName() string {
+	return e.EventName
+}
+
+func (e *Event) GetPayload() []byte {
+	return e.Payload
 }
 
 func NewNatsEventListener(connection *nats.EncodedConn, exchange, queue string) (etg.EventListener, error) {
