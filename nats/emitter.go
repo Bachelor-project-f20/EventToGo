@@ -24,7 +24,7 @@ func NewNatsEventEmitter(connection *nats.EncodedConn, exchange, queue string) (
 }
 
 func (n *natsEventEmitter) Emit(e etg.Event) error {
-	err := n.connection.Publish(e.GetID(), e)
+	err := n.connection.Publish(e.GetEventName(), e)
 	if err != nil {
 		log.Fatal(err)
 		return err
