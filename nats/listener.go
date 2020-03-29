@@ -48,8 +48,8 @@ func NewNatsEventListener(connection *nats.EncodedConn, exchange, queue string) 
 	return &listener, nil
 }
 
-func (n *natsEventListener) Listen(events ...string) (<-chan etg.Event, <-chan error, error) {
-	eventChan := make(chan etg.Event)
+func (n *natsEventListener) Listen(events ...string) (<-chan etg.BaseEvent, <-chan error, error) {
+	eventChan := make(chan etg.BaseEvent)
 	errChan := make(chan error)
 
 	for count, _ := range events {
