@@ -4,6 +4,6 @@ type Event struct {
 	ID        string
 	EventName string
 	Publisher string
-	TimeStamp int64
+	Timestamp int64
 	Payload   []byte
 }
