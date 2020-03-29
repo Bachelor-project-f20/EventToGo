@@ -1,5 +1,5 @@
 package eventToGo
 
 type EventEmitter interface {
-	Emit(e BaseEvent) error
+	Emit(e Event) error
 }
