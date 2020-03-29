@@ -43,7 +43,7 @@ func TestEmit(t *testing.T) {
 		t.Error(err)
 	}
 
-	event := &etg.Event{
+	event := etg.Event{
 		"test",
 		"test",
 		"test",
@@ -76,7 +76,7 @@ func TestListen(t *testing.T) {
 		[]byte{'t'},
 	}
 
-	eventChan, _, listenErr := eventListener.Listen(event.GetID())
+	eventChan, _, listenErr := eventListener.Listen(event.ID)
 	if listenErr != nil {
 		fmt.Println("Listen function  failed")
 		t.Error(err)
@@ -84,7 +84,7 @@ func TestListen(t *testing.T) {
 
 	//Necessary - when the Nats connection is not set to durable, messages in unsubscribed message queues are lost
 	eventEmitter, _ := lnats.NewNatsEventEmitter(encodedConn, exchange, queueType)
-	eventEmitter.Emit(event)
+	eventEmitter.Emit(*event)
 
 	recEvent := <-eventChan
 

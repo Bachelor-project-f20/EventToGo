@@ -11,34 +11,6 @@ type natsEventListener struct {
 	queue      string
 }
 
-type Event struct {
-	ID        string
-	EventName string
-	Publisher string
-	Timestamp int64
-	Payload   []byte
-}
-
-func (e *Event) GetID() string {
-	return e.ID
-}
-
-func (e *Event) GetPublisher() string {
-	return e.Publisher
-}
-
-func (e *Event) GetTimestamp() int64 {
-	return e.Timestamp
-}
-
-func (e *Event) GetEventName() string {
-	return e.EventName
-}
-
-func (e *Event) GetPayload() []byte {
-	return e.Payload
-}
-
 func NewNatsEventListener(connection *nats.EncodedConn, exchange, queue string) (etg.EventListener, error) {
 	listener := natsEventListener{
 		connection,
@@ -48,13 +20,13 @@ func NewNatsEventListener(connection *nats.EncodedConn, exchange, queue string) 
 	return &listener, nil
 }
 
-func (n *natsEventListener) Listen(events ...string) (<-chan etg.BaseEvent, <-chan error, error) {
-	eventChan := make(chan etg.BaseEvent)
+func (n *natsEventListener) Listen(events ...string) (<-chan etg.Event, <-chan error, error) {
+	eventChan := make(chan etg.Event)
 	errChan := make(chan error)
 
 	for count, _ := range events {
-		_, err := n.connection.QueueSubscribe(events[count], n.queue, func(e *Event) {
-			eventChan <- e
+		_, err := n.connection.QueueSubscribe(events[count], n.queue, func(e *etg.Event) {
+			eventChan <- *e
 		})
 		if err != nil {
 			errChan <- err
