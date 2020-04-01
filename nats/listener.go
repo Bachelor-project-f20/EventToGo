@@ -2,7 +2,7 @@ package nats
 
 import (
 	etg "github.com/Bachelor-project-f20/eventToGo"
-	models "github.com/Bachelor-project-f20/eventToGo/shared/proto/gen"
+	models "github.com/Bachelor-project-f20/shared/models"
 	"github.com/nats-io/go-nats"
 )
 
