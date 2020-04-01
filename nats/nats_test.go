@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	etg "github.com/Bachelor-project-f20/eventToGo"
 	lnats "github.com/Bachelor-project-f20/eventToGo/nats"
+	models "github.com/Bachelor-project-f20/shared/models"
 	"github.com/nats-io/go-nats"
 )
 
@@ -43,13 +43,12 @@ func TestEmit(t *testing.T) {
 		t.Error(err)
 	}
 
-	event := etg.Event{
-		"test",
-		"test",
-		"test",
-		time.Now().UnixNano(),
-		[]byte{'t'},
-	}
+	event := models.Event{}
+	event.ID = "test"
+	event.EventName = "test"
+	event.Publisher = "test"
+	event.Timestamp = time.Now().UnixNano()
+	event.Payload = []byte{'t'}
 
 	emitErr := eventEmitter.Emit(event)
 
@@ -68,13 +67,12 @@ func TestListen(t *testing.T) {
 		t.Error(err)
 	}
 
-	event := &etg.Event{
-		"test",
-		"test",
-		"test",
-		time.Now().UnixNano(),
-		[]byte{'t'},
-	}
+	event := models.Event{}
+	event.ID = "test"
+	event.EventName = "test"
+	event.Publisher = "test"
+	event.Timestamp = time.Now().UnixNano()
+	event.Payload = []byte{'t'}
 
 	eventChan, _, listenErr := eventListener.Listen(event.ID)
 	if listenErr != nil {
@@ -84,7 +82,7 @@ func TestListen(t *testing.T) {
 
 	//Necessary - when the Nats connection is not set to durable, messages in unsubscribed message queues are lost
 	eventEmitter, _ := lnats.NewNatsEventEmitter(encodedConn, exchange, queueType)
-	eventEmitter.Emit(*event)
+	eventEmitter.Emit(event)
 
 	recEvent := <-eventChan
 
