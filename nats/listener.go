@@ -2,6 +2,7 @@ package nats
 
 import (
 	etg "github.com/Bachelor-project-f20/eventToGo"
+	models "github.com/Bachelor-project-f20/eventToGo/shared/proto/gen"
 	"github.com/nats-io/go-nats"
 )
 
@@ -20,12 +21,12 @@ func NewNatsEventListener(connection *nats.EncodedConn, exchange, queue string) 
 	return &listener, nil
 }
 
-func (n *natsEventListener) Listen(events ...string) (<-chan etg.Event, <-chan error, error) {
-	eventChan := make(chan etg.Event)
+func (n *natsEventListener) Listen(events ...string) (<-chan models.Event, <-chan error, error) {
+	eventChan := make(chan models.Event)
 	errChan := make(chan error)
 
 	for count, _ := range events {
-		_, err := n.connection.QueueSubscribe(events[count], n.queue, func(e *etg.Event) {
+		_, err := n.connection.QueueSubscribe(events[count], n.queue, func(e *models.Event) {
 			eventChan <- *e
 		})
 		if err != nil {

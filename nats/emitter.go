@@ -4,6 +4,7 @@ import (
 	"log"
 
 	etg "github.com/Bachelor-project-f20/eventToGo"
+	models "github.com/Bachelor-project-f20/eventToGo/shared/proto/gen"
 	"github.com/nats-io/go-nats"
 )
 
@@ -23,7 +24,7 @@ func NewNatsEventEmitter(connection *nats.EncodedConn, exchange, queue string) (
 	return &emitter, nil
 }
 
-func (n *natsEventEmitter) Emit(e etg.Event) error {
+func (n *natsEventEmitter) Emit(e models.Event) error {
 	err := n.connection.Publish(e.EventName, e)
 	if err != nil {
 		log.Fatal(err)
