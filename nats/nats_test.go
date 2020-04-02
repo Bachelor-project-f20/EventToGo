@@ -7,7 +7,7 @@ import (
 
 	lnats "github.com/Bachelor-project-f20/eventToGo/nats"
 	models "github.com/Bachelor-project-f20/shared/models"
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats.go"
 )
 
 var natsConn *nats.Conn

@@ -3,7 +3,7 @@ package nats
 import (
 	etg "github.com/Bachelor-project-f20/eventToGo"
 	models "github.com/Bachelor-project-f20/shared/models"
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats.go"
 )
 
 type natsEventListener struct {
