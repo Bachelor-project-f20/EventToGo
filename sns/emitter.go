@@ -2,7 +2,6 @@ package sns
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	etg "github.com/Bachelor-project-f20/eventToGo"
@@ -22,19 +21,6 @@ func NewSNSEventEmitter(client *sns.SNS, topicArnMap map[string]string) (etg.Eve
 
 func (s *snsEventEmitter) Emit(event models.Event) error {
 
-	// Initialize a session in us-west-2 that the SDK will use to load
-	// credentials from the shared credentials file ~/.aws/credentials.
-	// sess, err := session.NewSession(&aws.Config{
-	// 	Region: aws.String("us-west-2"),
-	// })
-
-	// if err != nil {
-	// 	fmt.Println("NewSession error:", err)
-	// 	return err
-	// }
-
-	// client := sns.New(sess)
-
 	marshalEvent, err := json.Marshal(event)
 
 	if err != nil {
@@ -49,12 +35,11 @@ func (s *snsEventEmitter) Emit(event models.Event) error {
 		TopicArn: aws.String(s.topicArnMap[event.EventName]),
 	}
 
-	result, err := s.client.Publish(input)
+	_, err = s.client.Publish(input)
 	if err != nil {
 		log.Fatalf("Publish error: %v \n", err)
 		return err
 	}
 
-	fmt.Println(result)
 	return nil
 }
