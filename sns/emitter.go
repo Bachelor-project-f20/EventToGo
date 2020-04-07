@@ -15,7 +15,7 @@ type snsEventEmitter struct {
 	topicArnMap map[string]string
 }
 
-func NewSNSEventEmitter(client *sns.SNS, topicArnMap map[string]string) (etg.EventEmitter, error) {
+func newSNSEventEmitter(client *sns.SNS, topicArnMap map[string]string) (etg.EventEmitter, error) {
 	return &snsEventEmitter{client, topicArnMap}, nil
 }
 
