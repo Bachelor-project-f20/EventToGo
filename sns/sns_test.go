@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	lsns "github.com/Bachelor-project-f20/eventToGo/sns"
+	handler "github.com/Bachelor-project-f20/eventToGo/sns"
 	models "github.com/Bachelor-project-f20/shared/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -20,8 +20,8 @@ import (
 )
 
 var svc *sns.SNS
-var topicArnMap map[string]string
 var events []string
+var snsHandler *handler.SNSHandler
 
 func TestSetupSNS(t *testing.T) {
 
@@ -42,61 +42,12 @@ func TestSetupSNS(t *testing.T) {
 	events = []string{
 		"test",
 	}
-	var err error
-	topicArnMap, err = setupTopicArns(events)
 
-	if err != nil {
-		fmt.Printf("Error creating topics with SNS instance, error: %v \n", err)
-		t.Error(err)
-	}
-
-}
-
-func TestEmit(t *testing.T) {
-
-	emitter, err := lsns.NewSNSEventEmitter(svc, topicArnMap)
-
-	if err != nil {
-		fmt.Printf("Error creating emitter, error: %v \n", err)
-		t.Error(err)
-	}
-
-	event := models.Event{}
-	event.ID = "test"
-	event.EventName = "test"
-	event.Publisher = "test"
-	event.Timestamp = time.Now().UnixNano()
-	event.Payload = []byte{'t'}
-
-	//creating subscriptions now, since AWS doesn't allow publishing to subjects without subscribers
-	for count, _ := range events {
-		event := events[count]
-		arn := topicArnMap[event]
-		_, err := svc.Subscribe(&sns.SubscribeInput{
-			//must provide the acutal IP of your machine, does not work with localhost - not important for this test however
-			Endpoint:              aws.String("http://<LOCAL-IP-HERE>/snstest"), //Get actual IP address somehow - OS package?
-			Protocol:              aws.String("http"),
-			ReturnSubscriptionArn: aws.Bool(true), // Return the ARN, even if user has yet to confirm
-			TopicArn:              aws.String(arn),
-		})
-		if err != nil {
-			fmt.Printf("Error subscribing to SNS topic: %v \n", err)
-			t.Error(err)
-		}
-	}
-
-	emitErr := emitter.Emit(event)
-
-	if emitErr != nil {
-		fmt.Println("Error while emitting event")
-		t.Error(err)
-	}
-	fmt.Println("Event emitted")
 }
 
 func TestListen(t *testing.T) {
 
-	listener, err := lsns.NewSNSEventListener(svc, topicArnMap)
+	listener, err := snsHandler.SetupListener(svc, events...)
 
 	if err != nil {
 		fmt.Printf("Error creating listener, error: %v \n", err)
@@ -117,7 +68,7 @@ func TestListen(t *testing.T) {
 		t.Error(listenErr)
 	}
 
-	emitter, _ := lsns.NewSNSEventEmitter(svc, topicArnMap)
+	emitter, _ := snsHandler.SetupEmitter(svc, events...)
 	emitter.Emit(event)
 
 	recEvent := <-eventChan
@@ -126,19 +77,37 @@ func TestListen(t *testing.T) {
 
 }
 
-func setupTopicArns(events []string) (map[string]string, error) {
-	arnMap := make(map[string]string)
-	for count, _ := range events {
-		eventName := events[count]
-		result, err := svc.CreateTopic(&sns.CreateTopicInput{
-			Name: aws.String(eventName),
-		})
+func TestEmit(t *testing.T) {
 
-		if err != nil {
-			fmt.Printf("Error creating topics with SNS instance, error: %v \n", err)
-			return nil, err
-		}
-		arnMap[eventName] = *result.TopicArn
+	emitter, err := snsHandler.SetupEmitter(svc, events...)
+
+	if err != nil {
+		fmt.Printf("Error creating emitter, error: %v \n", err)
+		t.Error(err)
 	}
-	return arnMap, nil
+
+	event := models.Event{}
+	event.ID = "test"
+	event.EventName = "test"
+	event.Publisher = "test"
+	event.Timestamp = time.Now().UnixNano()
+	event.Payload = []byte{'t'}
+
+	emitErr := emitter.Emit(event)
+
+	if emitErr != nil {
+		fmt.Println("Error while emitting event")
+		t.Error(err)
+	}
+	fmt.Println("Event emitted")
+}
+
+func TestCreateEmitterAndListener(t *testing.T) {
+	_, _, err := snsHandler.SetupEmitterAndListener(svc, events...)
+
+	if err != nil {
+		fmt.Println("Error while creating emitter and listener simultaneously")
+		t.Error(err)
+	}
+
 }

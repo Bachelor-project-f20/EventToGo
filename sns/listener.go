@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
+	"strings"
 
 	etg "github.com/Bachelor-project-f20/eventToGo"
 	models "github.com/Bachelor-project-f20/shared/models"
@@ -18,7 +20,7 @@ type snsEventListener struct {
 	topicArnMap map[string]string
 }
 
-func NewSNSEventListener(client *sns.SNS, topicArnMap map[string]string) (etg.EventListener, error) {
+func newSNSEventListener(client *sns.SNS, topicArnMap map[string]string) (etg.EventListener, error) {
 	return &snsEventListener{client, topicArnMap}, nil
 }
 
@@ -41,9 +43,10 @@ func (s *snsEventListener) createSubscriptions(events ...string) error {
 	for count, _ := range events {
 		event := events[count]
 		arn := s.topicArnMap[event]
+		endpoint := "http://" + getLocalIP() + ":8081/sns"
 		_, err := s.client.Subscribe(&sns.SubscribeInput{
 			//must provide the acutal IP of your machine, does not work with localhost
-			Endpoint:              aws.String("http://<LOCAL-IP-HERE>/endpoint"), //Get actual IP address somehow - OS package?
+			Endpoint:              aws.String(endpoint), //Get actual IP address somehow - OS package?
 			Protocol:              aws.String("http"),
 			ReturnSubscriptionArn: aws.Bool(true), // Return the ARN, even if user has yet to confirm
 			TopicArn:              aws.String(arn),
@@ -56,14 +59,28 @@ func (s *snsEventListener) createSubscriptions(events ...string) error {
 	return nil
 }
 
-//Everything below was shamelessly repurposed from: https://github.com/viveksyngh/aws-sns-subscriber/blob/master/subscriber/subscriber.go
+func getLocalIP() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer conn.Close()
+	localAddr := conn.LocalAddr()
+	ipAddr := strings.Split(localAddr.String(), ":")
+	return ipAddr[0]
+}
+
+//Everything below was shamelessly repurposed from:
+// https://github.com/viveksyngh/aws-sns-subscriber/blob/master/subscriber/subscriber.go
 
 const subConfrmType = "SubscriptionConfirmation"
 const notificationType = "Notification"
 
 func createSubscriptionHandlers(eventChan chan models.Event) {
 	handler := chanHandler(eventChan)
-	http.HandleFunc("/endpoint", handler)
+	http.HandleFunc("/sns", handler)
 	go http.ListenAndServe(":8081", nil)
 }
 
