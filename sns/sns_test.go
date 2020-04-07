@@ -4,6 +4,8 @@ package sns_test
 // must be running, on port 9911 (unless the test code is changed):
 // https://hub.docker.com/r/s12v/sns/?fbclid=IwAR23X1mEVHH5Q64awf-ZtyzC_r712-yjfmqEQGRvDCT8LYfMkdyP4goTxdE
 
+//Alternatively, one can attach to an actual SNS instance, by using the SharedConfigState session initialization
+
 import (
 	"fmt"
 	"testing"
@@ -29,6 +31,12 @@ func TestSetupSNS(t *testing.T) {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{Credentials: credentials.AnonymousCredentials, Endpoint: aws.String("http://localhost:9911"), Region: aws.String("us-east-1"), DisableSSL: aws.Bool(true)},
 	}))
+
+	//Using actual SNS instance
+	//Requires config and credential file in ~/.aws/
+	// sess := session.Must(session.NewSessionWithOptions(session.Options{
+	// 	SharedConfigState: session.SharedConfigEnable,
+	// }))
 	svc = sns.New(sess)
 
 	events = []string{
@@ -47,7 +55,6 @@ func TestSetupSNS(t *testing.T) {
 func TestEmit(t *testing.T) {
 
 	emitter, err := lsns.NewSNSEventEmitter(svc, topicArnMap)
-	listener, err := lsns.NewSNSEventListener(svc, topicArnMap)
 
 	if err != nil {
 		fmt.Printf("Error creating emitter, error: %v \n", err)
@@ -61,9 +68,22 @@ func TestEmit(t *testing.T) {
 	event.Timestamp = time.Now().UnixNano()
 	event.Payload = []byte{'t'}
 
-	//Performed as go routine to avoid the Test going into an endless loop when the handlefunctions are triggered
-	//Listen MUST be called for emit to work, since SNS rejects publishing to subjects without subscribers
-	listener.Listen(event.EventName)
+	//creating subscriptions now, since AWS doesn't allow publishing to subjects without subscribers
+	for count, _ := range events {
+		event := events[count]
+		arn := topicArnMap[event]
+		_, err := svc.Subscribe(&sns.SubscribeInput{
+			//must provide the acutal IP of your machine, does not work with localhost - not important for this test however
+			Endpoint:              aws.String("http://<LOCAL-IP-HERE>/snstest"), //Get actual IP address somehow - OS package?
+			Protocol:              aws.String("http"),
+			ReturnSubscriptionArn: aws.Bool(true), // Return the ARN, even if user has yet to confirm
+			TopicArn:              aws.String(arn),
+		})
+		if err != nil {
+			fmt.Printf("Error subscribing to SNS topic: %v \n", err)
+			t.Error(err)
+		}
+	}
 
 	emitErr := emitter.Emit(event)
 
@@ -72,8 +92,6 @@ func TestEmit(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println("Event emitted")
-
-	time.Sleep(10 * time.Second)
 }
 
 func TestListen(t *testing.T) {
@@ -120,8 +138,6 @@ func setupTopicArns(events []string) (map[string]string, error) {
 			fmt.Printf("Error creating topics with SNS instance, error: %v \n", err)
 			return nil, err
 		}
-
-		fmt.Printf("Topic Arn created: %s \n", *result.TopicArn)
 		arnMap[eventName] = *result.TopicArn
 	}
 	return arnMap, nil
