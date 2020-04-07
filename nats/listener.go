@@ -12,7 +12,7 @@ type natsEventListener struct {
 	queue      string
 }
 
-func NewNatsEventListener(connection *nats.EncodedConn, exchange, queue string) (etg.EventListener, error) {
+func newNatsEventListener(connection *nats.EncodedConn, exchange, queue string) (etg.EventListener, error) {
 	listener := natsEventListener{
 		connection,
 		exchange,

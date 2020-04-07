@@ -14,7 +14,7 @@ type natsEventEmitter struct {
 	queue      string
 }
 
-func NewNatsEventEmitter(connection *nats.EncodedConn, exchange, queue string) (etg.EventEmitter, error) {
+func newNatsEventEmitter(connection *nats.EncodedConn, exchange, queue string) (etg.EventEmitter, error) {
 	emitter := natsEventEmitter{
 		connection,
 		exchange,
